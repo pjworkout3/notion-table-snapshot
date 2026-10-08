@@ -24,14 +24,16 @@ try {
     colorScheme: 'light', // change to 'dark' if you prefer
   });
 
-  await page.goto(PAGE_URL, { waitUntil: 'networkidle', timeout: 90_000 });
+  // Notion keeps background connections open, so 'networkidle' never fires.
+  // Load the HTML, then wait for the table itself to render (below).
+  await page.goto(PAGE_URL, { waitUntil: 'domcontentloaded', timeout: 90_000 });
 
   // Find the table using the first selector that matches.
   let table = null;
   for (const sel of SELECTORS) {
     const loc = page.locator(sel).first();
     try {
-      await loc.waitFor({ state: 'visible', timeout: 20_000 });
+      await loc.waitFor({ state: 'visible', timeout: 60_000 });
       table = loc;
       console.log(`Found table with selector: ${sel}`);
       break;
