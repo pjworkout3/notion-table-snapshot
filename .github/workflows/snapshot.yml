@@ -1,0 +1,48 @@
+name: Notion table snapshot
+
+on:
+  schedule:
+    # Every 6 hours (times are UTC): 00:17, 06:17, 12:17, 18:17
+    - cron: '17 */6 * * *'
+  workflow_dispatch: # lets you run it manually from the Actions tab
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Playwright + Chromium
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+
+      - name: Take screenshot
+        run: node snapshot.mjs
+        env:
+          PAGE_URL: https://pjeong.notion.site/Workout-Planner-6a554be4eb884f3187ab026854343902
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
