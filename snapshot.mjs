@@ -21,7 +21,7 @@ try {
   const page = await browser.newPage({
     viewport: { width: 1100, height: 1600 },
     deviceScaleFactor: 2, // sharp on a phone screen
-    colorScheme: 'light', // change to 'dark' if you prefer
+    colorScheme: 'dark', // change to 'dark' if you prefer
   });
 
   // Notion keeps background connections open, so 'networkidle' never fires.
