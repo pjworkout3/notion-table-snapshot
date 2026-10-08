@@ -6,6 +6,7 @@
     "snapshot": "node snapshot.mjs"
   },
   "dependencies": {
-    "playwright": "^1.48.0"
+    "playwright": "^1.48.0",
+    "sharp": "^0.33.5"
   }
 }

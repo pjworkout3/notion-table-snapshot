@@ -3,10 +3,12 @@
 
 import { chromium } from 'playwright';
 import { mkdir, writeFile } from 'node:fs/promises';
+import sharp from 'sharp';
 
 const PAGE_URL = process.env.PAGE_URL;
-// Notion renders simple tables as .notion-table-block; fall back to any <table>.
-const SELECTORS = (process.env.TABLE_SELECTOR || '.notion-table-block, table')
+// Prefer the <table> inside Notion's table block (the block itself is full
+// page width, which adds empty space beside a narrow table).
+const SELECTORS = (process.env.TABLE_SELECTOR || '.notion-table-block table, table, .notion-table-block')
   .split(',')
   .map((s) => s.trim());
 const OUT_DIR = 'site';
@@ -21,7 +23,7 @@ try {
   const page = await browser.newPage({
     viewport: { width: 1100, height: 1600 },
     deviceScaleFactor: 2, // sharp on a phone screen
-    colorScheme: 'dark', // change to 'dark' if you prefer
+    colorScheme: 'light', // change to 'dark' if you prefer
   });
 
   // Notion keeps background connections open, so 'networkidle' never fires.
@@ -60,7 +62,13 @@ try {
   await page.waitForTimeout(1500); // let images/emoji settle
 
   await mkdir(OUT_DIR, { recursive: true });
-  await table.screenshot({ path: `${OUT_DIR}/table.png` });
+  const raw = await table.screenshot();
+  // Trim any remaining blank border, then add a small even margin.
+  await sharp(raw)
+    .trim({ threshold: 10 })
+    .extend({ top: 8, bottom: 8, left: 8, right: 8, background: '#ffffff' })
+    .png()
+    .toFile(`${OUT_DIR}/table.png`);
 
   const updated = new Date().toISOString();
   await writeFile(`${OUT_DIR}/updated.txt`, updated + '\n');
